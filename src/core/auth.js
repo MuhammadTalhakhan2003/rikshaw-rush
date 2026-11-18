@@ -16,9 +16,11 @@ export const auth = {
   async init(onChange) {
     if (!KEY) return;
     try {
-      const { Clerk } = await import('@clerk/clerk-js');
+      // Clerk v6 ships its sign-in / sign-up UI as a separate package; bundle it so the modals work everywhere.
+      const [{ Clerk }, { ui }] = await Promise.all([import('@clerk/clerk-js'), import('@clerk/ui')]);
       clerk = new Clerk(KEY);
       await clerk.load({
+        ui,
         appearance: {
           variables: { colorPrimary: '#0b8f3a', colorText: '#1b1024', borderRadius: '14px', fontFamily: '"Trebuchet MS", system-ui, sans-serif' },
         },

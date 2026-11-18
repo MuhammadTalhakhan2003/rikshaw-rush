@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@clerk/clerk-js": "^6.45.0",
+    "@clerk/ui": "^1.43.1",
     "three": "^0.170.0"
   },
   "devDependencies": {
