@@ -75,6 +75,10 @@ async function boot() {
   radio.init();
 
 
+  // ?demo — expose internals for the scripted trailer capture (no effect otherwise)
+  if (new URLSearchParams(location.search).has('demo')) {
+    window.__rr = { run, env, player, world, weather, save, startRun, goMenu, applyStartDistrict, ui, get state() { return state; } };
+  }
   goMenu();
   renderer.compile(scene, camera);
   requestAnimationFrame(loop);

@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@clerk/clerk-js": "^5.128.2",
+    "@clerk/clerk-js": "^6.45.0",
     "three": "^0.170.0"
   },
   "devDependencies": {
