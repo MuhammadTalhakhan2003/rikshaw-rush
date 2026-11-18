@@ -2,3 +2,6 @@ node_modules
 dist
 *.local
 blender/_preview
+
+.vercel
+.env*
