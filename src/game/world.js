@@ -6,10 +6,14 @@ import { Builder, pick, rand, randi } from '../render/kit.js';
 import { curveUniforms } from '../render/curve.js';
 import { customModel } from '../render/gltf.js';
 import { createBuilding } from '../models/buildings.js';
-import { createLamp, createTree, createStall, createBillboard, createElectricPole, createGate, createCamel, createUmbrella, createLighthouse, createPosterWall, createPaanCabin, createGroundStain } from '../models/props.js';
-import { createShip, createCrane, createBollard, createMausoleum, createFlagLamp } from '../models/landmarks.js';
+import { createLamp, createTree, createStall, createBillboard, createElectricPole, createGate, createCamel, createUmbrella, createLighthouse, createPosterWall, createPaanCabin, createGroundStain, createBunting, createDupattaStall, createTurtle, createRock } from '../models/props.js';
+import { createShip, createCrane, createBollard, createMausoleum, createFlagLamp, createEmpressMarket, createTeenTalwar } from '../models/landmarks.js';
 
 const BEHIND = 34;
+// Landmarks that sit in an open plaza on the left: [maker, x, half-length of the cleared frontage].
+const LANDMARKS = { saddar: [createEmpressMarket, -10.5, 33], clifton: [createTeenTalwar, -20.5, 40] };
+const LM_AT = 520; // metres into the district
+const localOf = s => ((s % DISTRICT_LENGTH) + DISTRICT_LENGTH) % DISTRICT_LENGTH;
 
 function createTile(d) {
   const b = new Builder();
@@ -22,18 +26,18 @@ function createTile(d) {
   for (const s of [-1, 1]) {
     b.plane(2.9, TILE, 'walk', d.walk, [s * 6.25, 0.22, 0], [-Math.PI / 2, 0, 0], { uv: [0, 0, 1.45, TILE / 2], segH: 8 });
     b.box(0.25, 0.24, TILE, 0x9a9a92, s * 4.88, 0.11, 0);
-    if ((d.id === 'sea' || d.id === 'port') && s < 0) continue;
+    if (d.shore && s < 0) continue;
     b.plane(44, TILE, 'ground', d.ground, [s * 29.7, 0.05, 0], [-Math.PI / 2, 0, 0], { uv: [0, 0, 8, TILE / 6], segH: 6 });
   }
-  if (d.id === 'sea') {
-    // Clifton: promenade wall, sandy beach sloping into the Arabian Sea
-    b.box(0.5, 0.7, TILE, 0xe8e2d4, -7.95, 0.35, 0);
+  if (d.shore === 'beach') {
+    // Clifton / Hawke's Bay: sandy beach sloping into the Arabian Sea (Sea View also has a promenade wall)
+    if (d.id === 'sea') b.box(0.5, 0.7, TILE, 0xe8e2d4, -7.95, 0.35, 0);
     b.plane(14, TILE, 'ground', d.ground, [-15.2, 0.02, 0], [-Math.PI / 2, 0, 0], { uv: [0, 0, 3, TILE / 6], segH: 6 });
-    b.plane(6, TILE, 'ground', 0xb59a62, [-25, -0.12, 0], [-Math.PI / 2, 0, 0], { uv: [0, 0, 1, TILE / 6], segH: 6 });
+    b.plane(6, TILE, 'ground', d.wet, [-25, -0.12, 0], [-Math.PI / 2, 0, 0], { uv: [0, 0, 1, TILE / 6], segH: 6 });
     b.box(0.6, 0.04, TILE, 0xffffff, -27.8, -0.16, 0, { kind: 'glow' });
-    b.plane(400, TILE, 'water', 0x1d6f8c, [-228, -0.2, 0], [-Math.PI / 2, 0, 0], { segH: 8 });
+    b.plane(400, TILE, 'water', d.water, [-228, -0.2, 0], [-Math.PI / 2, 0, 0], { segH: 8 });
   }
-  if (d.id === 'port') {
+  if (d.shore === 'quay') {
     // Kemari: concrete quay with a yellow safety line, harbour water beyond
     b.plane(8, TILE, 'ground', d.ground, [-11.7, 0.05, 0], [-Math.PI / 2, 0, 0], { uv: [0, 0, 2, TILE / 6], segH: 6 });
     b.box(0.3, 0.02, TILE, 0xffd60a, -14.6, 0.07, 0);
@@ -42,6 +46,14 @@ function createTile(d) {
   }
   if (d.id === 'mazar') {
     for (const s of [-1, 1]) b.box(0.6, 0.3, TILE, 0x3f8f2f, s * 7.4, 0.3, 0);
+  }
+  if (d.id === 'clifton') {
+    // planted verge with low white railings along the boulevard
+    for (const s of [-1, 1]) {
+      b.box(0.9, 0.25, TILE, 0x4f8f3a, s * 7.25, 0.32, 0);
+      for (let z = -TILE / 2; z < TILE / 2; z += 3) b.box(0.08, 0.6, 0.08, 0xf2f2f2, s * 7.75, 0.55, z);
+      b.box(0.06, 0.06, TILE, 0xf2f2f2, s * 7.75, 0.82, 0);
+    }
   }
   return b.build();
 }
@@ -114,17 +126,39 @@ export class World {
           this.sideNext[side] += rand(9, 15);
           continue;
         }
+        if (d.id === 'hawks' && side === 'L') {
+          const r = Math.random();
+          if (r < 0.5) {
+            const obj = this.take(`hut${di}_${Math.floor(Math.random() * 8)}`, () => { const h = createBuilding(d); h.group.userData.w = h.w; return h.group; });
+            this.place(obj, s0 + obj.userData.w / 2, -9.2, 0, 0);
+            if (Math.random() < 0.5) this.place(this.take(`turtle${Math.floor(Math.random() * 3)}`, createTurtle), s0 + rand(0, obj.userData.w), -20 - rand(0, 5), 0, rand(-0.5, 0.5));
+            this.sideNext[side] += obj.userData.w + rand(3, 8);
+          } else {
+            if (r < 0.75) this.place(this.take(`turtle${Math.floor(Math.random() * 3)}`, createTurtle), s0 + 3, -12 - rand(0, 13), 0, rand(-0.6, 0.6));
+            else if (r < 0.9) this.place(this.take(`umb${di}${Math.floor(Math.random() * 4)}`, createUmbrella), s0 + 3, -12 - rand(0, 9));
+            else this.place(this.take(`camel${di}${Math.floor(Math.random() * 3)}`, () => customModel('camel')?.group || createCamel()), s0 + 3, -14 - rand(0, 9), 0, rand(-0.6, 0.6));
+            if (Math.random() < 0.4) this.place(this.take(`rock${Math.floor(Math.random() * 4)}`, createRock), s0 + 6, -22 - rand(0, 4), 0, rand(0, 3));
+            this.sideNext[side] += rand(8, 14);
+          }
+          continue;
+        }
         if (d.id === 'port' && side === 'L') {
           if (Math.random() < 0.6) this.place(this.take(`crane${di}${Math.floor(Math.random() * 3)}`, createCrane), s0 + 4, -11.5, 0, 0, 60);
           if (Math.random() < 0.5) this.place(this.take(`bol${di}`, createBollard), s0 + 9, -14.2);
           this.sideNext[side] += rand(18, 30);
           continue;
         }
+        const lm = side === 'L' && LANDMARKS[d.id];
+        if (lm) {
+          // keep the landmark's frontage open so it can be seen from the road
+          const l0 = localOf(s0);
+          if (l0 + 16 > LM_AT - lm[2] && l0 < LM_AT + lm[2]) { this.sideNext[side] = s0 - l0 + LM_AT + lm[2]; continue; }
+        }
         const key = `bld${di}_${Math.floor(Math.random() * 14)}`;
         const obj = this.take(key, () => { const r = createBuilding(d); r.group.userData.w = r.w; return r.group; });
         const w = obj.userData.w;
         this.place(obj, s0 + w / 2, sg * 7.9, 0, side === 'L' ? 0 : Math.PI);
-        const gap = d.id === 'old' ? 0.15 : rand(1.5, 4.5);
+        const gap = d.id === 'old' || d.id === 'saddar' ? 0.15 : d.id === 'hawks' ? rand(10, 22) : rand(1.5, 4.5);
         this.sideNext[side] += w + gap;
       }
     }
@@ -133,12 +167,12 @@ export class World {
       const di = districtIndexAt(this.lampNext);
       const d = DISTRICTS[di];
       for (const sg of [-1, 1]) {
-        if (d.id === 'sea' && sg < 0) {
+        if (d.shore === 'beach' && sg < 0) {
           this.place(this.take(`lamp${di}L`, () => createLamp('sea', -1)), this.lampNext + 15, -5.2);
           continue;
         }
         const offset = sg > 0 ? 0 : 15;
-        this.place(this.take(`lamp${di}${sg}`, () => createLamp(d.id, sg)), this.lampNext + offset, sg * 5.2);
+        this.place(this.take(`lamp${di}${sg}`, () => createLamp(d.lamp || d.id, sg)), this.lampNext + offset, sg * 5.2);
       }
       this.lampNext += 30;
     }
@@ -147,11 +181,30 @@ export class World {
       const s = this.propNext;
       const di = districtIndexAt(s);
       const d = DISTRICTS[di];
-      const sg = Math.random() < 0.5 ? -1 : 1;
+      let sg = Math.random() < 0.5 ? -1 : 1;
+      if (LANDMARKS[d.id] && Math.abs(localOf(s) - LM_AT) < LANDMARKS[d.id][2] + 14) sg = 1; // keep the landmark frontage clear
       // paan cabins + peek stains everywhere except the Mazar gardens
-      if (d.id !== 'mazar' && Math.random() < (d.id === 'old' ? 0.45 : 0.25)) this.place(this.take(`paan${di}${sg}${Math.floor(Math.random() * 3)}`, () => createPaanCabin(sg)), s + 4, sg * 6.9);
-      if (d.id !== 'mazar' && Math.random() < 0.6) this.place(this.take(`stain${Math.floor(Math.random() * 4)}`, createGroundStain), s + rand(0, 10), sg * rand(5.3, 7.2), 0.2);
-      if (d.id === 'old') {
+      const paanP = { old: 0.45, saddar: 0.35, mazar: 0, clifton: 0.12, hawks: 0.1 }[d.id] ?? 0.25;
+      if (Math.random() < paanP && !(d.id === 'hawks' && sg < 0)) this.place(this.take(`paan${di}${sg}${Math.floor(Math.random() * 3)}`, () => createPaanCabin(sg)), s + 4, sg * 6.9);
+      if (d.id !== 'mazar' && d.id !== 'clifton' && Math.random() < 0.6) this.place(this.take(`stain${Math.floor(Math.random() * 4)}`, createGroundStain), s + rand(0, 10), sg * rand(5.3, 7.2), 0.2);
+      if (d.id === 'saddar') {
+        if (Math.random() < 0.5) this.place(this.take(`stall${di}${sg}${Math.floor(Math.random() * 4)}`, () => createStall(sg)), s, sg * 6.6);
+        if (Math.random() < 0.55) this.place(this.take(`pole${di}`, createElectricPole), s + 6, sg * 7.3);
+        if (Math.random() < 0.15) this.place(this.take(`pw${di}${sg}${Math.floor(Math.random() * 3)}`, () => createPosterWall(sg)), s + 12, sg * 7.5);
+      } else if (d.id === 'tariq') {
+        if (Math.random() < 0.45) this.place(this.take(`bunt${di}${Math.floor(Math.random() * 3)}`, createBunting), s + 2, 0);
+        if (Math.random() < 0.5) this.place(this.take(`dup${di}${sg}${Math.floor(Math.random() * 4)}`, () => createDupattaStall(sg)), s + 7, sg * 6.6);
+        if (Math.random() < 0.3) this.place(this.take(`bb${di}${sg}${Math.floor(Math.random() * 4)}`, () => createBillboard(sg, d.neon)), s + 12, sg * 9.5);
+      } else if (d.id === 'clifton') {
+        this.place(this.take(`palm${di}${sg}${Math.floor(Math.random() * 3)}`, () => createTree('palm')), s, sg * 7.25);
+        if (Math.random() < 0.6) this.place(this.take(`palm${di}${-sg}${Math.floor(Math.random() * 3)}`, () => createTree('palm')), s + 8, -sg * 7.25);
+        if (Math.random() < 0.3) this.place(this.take(`stall${di}${sg}${Math.floor(Math.random() * 3)}`, () => createStall(sg)), s + 12, sg * 6.4);
+        if (Math.random() < 0.3) this.place(this.take(`bb${di}${sg}${Math.floor(Math.random() * 4)}`, () => createBillboard(sg, d.neon)), s + 10, sg * 9.5);
+      } else if (d.id === 'hawks') {
+        if (Math.random() < 0.6) this.place(this.take(`rock${Math.floor(Math.random() * 4)}`, createRock), s, rand(9, 14), 0, rand(0, 3));
+        if (Math.random() < 0.4) this.place(this.take(`palmR${di}${Math.floor(Math.random() * 3)}`, () => createTree('palm')), s + 7, 6.9);
+        if (Math.random() < 0.2) this.place(this.take(`stall${di}${Math.floor(Math.random() * 3)}`, () => createStall(1)), s + 11, 6.4);
+      } else if (d.id === 'old') {
         if (Math.random() < 0.55) this.place(this.take(`stall${di}${sg}${Math.floor(Math.random() * 4)}`, () => createStall(sg)), s, sg * 6.6);
         if (Math.random() < 0.5) this.place(this.take(`pole${di}`, createElectricPole), s + 6, 7.3);
         if (Math.random() < 0.25) this.place(this.take(`pw${di}${sg}${Math.floor(Math.random() * 3)}`, () => createPosterWall(sg)), s + 12, sg * 7.5);
@@ -169,7 +222,7 @@ export class World {
       }
       this.propNext += rand(14, 24);
     }
-    // big landmarks: ships in the harbour, the mausoleum across the gardens
+    // big landmarks: ships in the harbour, the mausoleum, Empress Market's clock tower, Teen Talwar
     while (this.bigNext < limit) {
       const s = this.bigNext;
       const di = districtIndexAt(s);
@@ -177,6 +230,11 @@ export class World {
       const local = ((s % DISTRICT_LENGTH) + DISTRICT_LENGTH) % DISTRICT_LENGTH;
       if (d.id === 'port') { this.place(this.take(`ship${di}${Math.floor(Math.random() * 3)}`, createShip), s + 30, -27, -0.2, 0, 70); this.bigNext += rand(75, 110); }
       else if (d.id === 'mazar' && local > 150 && local < 1000) { this.place(this.take(`mazar${di}`, createMausoleum), s + 120, -95, 0, 0, 120); this.bigNext += 800; }
+      else if (LANDMARKS[d.id]) {
+        const [make, x] = LANDMARKS[d.id];
+        if (local <= LM_AT && local + 60 > LM_AT) this.place(this.take(`lm${di}`, make), s - local + LM_AT, x, 0, 0, 120);
+        this.bigNext += 60;
+      }
       else this.bigNext += 60;
     }
     // district gates

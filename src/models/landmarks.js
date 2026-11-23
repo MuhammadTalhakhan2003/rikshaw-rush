@@ -148,3 +148,98 @@ export function createFlagLamp() {
   flagPole(b, 0, 0);
   return b.build();
 }
+
+// ---------------- Saddar: Empress Market ----------------
+/** Sandstone market hall with a pointed-arch arcade and its Gothic clock tower. Faces +x (the road). */
+export function createEmpressMarket() {
+  const b = new Builder();
+  const stone = 0xd4a862, light = 0xe9cf98, trim = 0xf3e2b8, dark = 0x3a2f28, roof = 0x8a5a3a;
+  const L = 48, D = 24, H = 11;
+  b.box(D, H, L, stone, -D / 2, H / 2, 0);
+  b.box(D - 2, 2.2, L - 2, roof, -D / 2, H + 1.1, 0);                         // pitched-roof suggestion
+  // pointed-arch arcade along the road face
+  for (let z = -L / 2 + 3.5; z < L / 2 - 2; z += 4) {
+    b.box(0.3, 5.6, 2.4, dark, 0.02, 3.0, z);
+    b.box(0.3, 1.0, 1.6, dark, 0.02, 6.2, z);
+    b.box(0.3, 0.7, 0.8, dark, 0.02, 7.0, z);
+    b.box(0.5, 7.6, 0.6, light, 0.12, 3.8, z + 2);                            // pilasters
+    b.box(0.12, 0.1, 2.0, 0xfff0c8, 0.2, 5.4, z, { kind: 'glow' });           // tube light in each arch
+  }
+  b.box(0.6, 0.5, L + 0.4, trim, 0.1, 8.2, 0);
+  b.box(D + 0.6, 0.6, L + 0.6, trim, -D / 2, H + 0.1, 0);
+  for (let z = -L / 2; z <= L / 2; z += 1.6) b.box(0.5, 0.8, 0.8, trim, 0.1, H + 0.8, z); // crenellation
+  // corner turrets
+  for (const z of [-L / 2, L / 2]) {
+    b.box(3.2, H + 3, 3.2, stone, -1.4, (H + 3) / 2, z);
+    b.box(3.6, 0.4, 3.6, trim, -1.4, H + 3.2, z);
+    b.cone(2.3, 3.2, roof, -1.4, H + 5, z, { seg: 4, r: [0, Math.PI / 4, 0] });
+  }
+  // the clock tower (ghanta ghar), stepped back from the road face
+  const T = 36, tx = -4.5, tw = 7;
+  b.box(tw, T, tw, stone, tx, T / 2, 0);
+  for (const y of [H + 0.5, 21, 26.5, T]) b.box(tw + 0.5, 0.5, tw + 0.5, trim, tx, y, 0);
+  for (const y of [15.5, 23.5]) {
+    b.box(0.2, 4, 1.1, dark, tx + tw / 2 + 0.02, y, -1.3);                    // lancet windows
+    b.box(0.2, 4, 1.1, dark, tx + tw / 2 + 0.02, y, 1.3);
+    b.box(1.1, 4, 0.2, dark, tx - 1.3, y, tw / 2 + 0.02);
+    b.box(1.1, 4, 0.2, dark, tx + 1.3, y, tw / 2 + 0.02);
+  }
+  // clock faces on the road side (+x) and the approach side (+z)
+  const faces = [[tx + tw / 2 + 0.1, 0, [0, 0, Math.PI / 2], [1, 0]], [tx, tw / 2 + 0.1, [Math.PI / 2, 0, 0], [0, 1]]];
+  for (const [x, z, r, [nx, nz]] of faces) {
+    b.cyl(2.5, 2.5, 0.2, 0xd4af37, x, 31, z, { r, seg: 24, kind: 'shiny' });
+    b.cyl(2.2, 2.2, 0.24, 0xfff6dc, x, 31, z, { r, seg: 24, kind: 'glow' });
+    b.box(nx ? 0.3 : 0.14, 1.5, nz ? 0.3 : 0.14, dark, x + nx * 0.1, 31.6, z + nz * 0.1); // hour hand
+    b.box(nx ? 0.3 : 1.9, nx ? 0.14 : 0.14, nx ? 1.9 : 0.3, dark, x + nx * 0.1 - (nz ? 0.8 : 0), 31, z + nz * 0.1 + (nx ? 0.8 : 0)); // minute hand
+  }
+  // corner pinnacles + spire
+  for (const dx of [-1, 1]) for (const dz of [-1, 1]) {
+    b.box(1, 3, 1, light, tx + dx * (tw / 2), T + 1.5, dz * (tw / 2));
+    b.cone(0.7, 2.2, roof, tx + dx * (tw / 2), T + 4.1, dz * (tw / 2), { seg: 4 });
+  }
+  b.box(tw - 1, 2, tw - 1, stone, tx, T + 1, 0);
+  b.cone(4.4, 9, roof, tx, T + 6.5, 0, { seg: 4, r: [0, Math.PI / 4, 0] });
+  b.cyl(0.12, 0.12, 2.4, 0xd4af37, tx, T + 12.2, 0, { seg: 6, kind: 'shiny' });
+  b.sphere(0.35, 0xff2020, tx, T + 13.5, 0, { kind: 'glow', seg: 6 });
+  // fruit-and-veg sellers' carts out front
+  for (let i = 0; i < 7; i++) {
+    const z = -L / 2 + 4 + i * 6.5;
+    b.box(1.4, 0.9, 2.4, 0x7a5230, 3, 0.7, z);
+    for (let k = 0; k < 6; k++) b.sphere(0.28, pick([0xff7a1a, 0xd62828, 0x6abf3a, 0xffd60a, 0x8e244d]), 2.6 + (k % 2) * 0.6, 1.3, z - 0.9 + (k >> 1) * 0.9, { seg: 6 });
+  }
+  for (const x of [-26, 6]) for (const z of [-L / 2 - 2, L / 2 + 2]) b.sphere(0.6, 0xfff3c4, x, 3, z, { kind: 'glow', seg: 6 });
+  b.plane(30, L + 10, 'shadow', 0xffffff, [-D / 2, 0.04, 0], [-Math.PI / 2, 0, 0]);
+  return b.build();
+}
+
+// ---------------- Clifton: Teen Talwar ----------------
+/** Three tall white swords standing tip-up on a round plinth in a green roundabout. */
+export function createTeenTalwar() {
+  const b = new Builder();
+  const white = 0xf7f7f2, shade = 0xd8d4ca, gold = 0xd4af37;
+  b.cyl(12, 12.4, 0.35, 0x5d9b45, 0, 0.18, 0, { seg: 32 });                   // grass
+  b.cyl(12.5, 12.7, 0.5, 0xd8d2c4, 0, 0.25, 0, { seg: 32, open: true });       // kerb ring
+  for (let i = 0; i < 12; i++) {                                                // flower beds
+    const a = (i / 12) * Math.PI * 2;
+    b.box(2.2, 0.3, 1.2, pick([0xe84a8a, 0xffd60a, 0xff7a1a, 0xffffff]), Math.cos(a) * 10.4, 0.45, Math.sin(a) * 10.4, { r: [0, -a, 0] });
+  }
+  b.cyl(8.5, 9, 1, shade, 0, 0.8, 0, { seg: 24 });
+  b.cyl(6.6, 7, 1.4, white, 0, 2, 0, { seg: 24 });
+  b.cyl(6.75, 6.75, 0.25, 0x0b6e3a, 0, 2.4, 0, { seg: 24 });                     // green band
+  for (let i = 0; i < 3; i++) {
+    const a = (i / 3) * Math.PI * 2 + 0.3;
+    const x = Math.cos(a) * 2.3, z = Math.sin(a) * 2.3, ry = -a;
+    b.sphere(0.55, gold, x, 3.2, z, { seg: 8, kind: 'shiny' });                  // pommel
+    b.cyl(0.32, 0.38, 2.6, white, x, 4.6, z, { seg: 8 });                        // grip
+    for (let k = 0; k < 3; k++) b.cyl(0.4, 0.4, 0.12, gold, x, 3.9 + k * 0.6, z, { seg: 8, kind: 'shiny' });
+    b.box(3.6, 0.55, 0.6, white, x, 6.1, z, { r: [0, ry, 0] });                  // crossguard
+    b.box(4.0, 0.3, 0.7, gold, x, 6.1, z, { r: [0, ry, 0], kind: 'shiny' });
+    const bl = 25, by = 6.4 + bl / 2;
+    b.box(1.5, bl, 0.32, white, x, by, z, { r: [0, ry, 0] });                   // blade
+    b.box(0.18, bl - 1.5, 0.36, shade, x, by - 0.4, z, { r: [0, ry, 0] });       // fuller
+    b.box(1.06, 1.06, 0.32, white, x, 6.4 + bl, z, { r: [0, ry, Math.PI / 4] }); // point (Rz applies first)
+    b.sphere(0.45, 0xfff3c4, Math.cos(a) * 7.6, 2.9, Math.sin(a) * 7.6, { kind: 'glow', seg: 6 }); // floodlights
+  }
+  b.plane(26, 26, 'shadow', 0xffffff, [0, 0.38, 0], [-Math.PI / 2, 0, 0]);
+  return b.build();
+}

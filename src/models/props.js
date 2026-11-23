@@ -331,4 +331,71 @@ export function createGroundStain() {
   return b.build();
 }
 
+// ---------- Tariq Road ----------
+/** Jhandiyan (paper flags) and bulb strings slung across the road between two poles. */
+export function createBunting() {
+  const b = new Builder();
+  const X = 7.2;
+  for (const s of [-1, 1]) b.box(0.14, 8, 0.14, 0x44474f, s * X, 4, 0);
+  const cols = [0xd62828, 0xffd60a, 0x0b8f3a, 0x1565c0, 0xe91e63, 0xff7a1a, 0xffffff];
+  for (let row = 0; row < 2; row++) {
+    const top = 7.6 - row * 0.5, sag = 0.9 + row * 0.3, dz = row * 0.6 - 0.3, N = 18;
+    for (let i = 0; i < N; i++) {
+      const t0 = i / N, t1 = (i + 1) / N;
+      const x0 = -X + t0 * 2 * X, x1 = -X + t1 * 2 * X;
+      const y0 = top - sag * Math.sin(Math.PI * t0), y1 = top - sag * Math.sin(Math.PI * t1);
+      const len = Math.hypot(x1 - x0, y1 - y0);
+      b.box(len, 0.03, 0.03, 0x222222, (x0 + x1) / 2, (y0 + y1) / 2, dz, { r: [0, 0, Math.atan2(y1 - y0, x1 - x0)] });
+      if (row === 0) b.box(0.42, 0.5, 0.02, pick(cols), (x0 + x1) / 2, (y0 + y1) / 2 - 0.3, dz, { r: [0, 0, Math.PI / 4] });
+      else b.sphere(0.09, pick([0xffd60a, 0xff2e88, 0x2bff88, 0x00e5ff, 0xffffff]), x0, y0 - 0.08, dz, { kind: 'glow', seg: 5 });
+    }
+  }
+  return b.build();
+}
+
+/** Dupatta / cloth stall: a rack of long hanging fabrics in loud colours. Faces the road. */
+export function createDupattaStall(side) {
+  const b = new Builder();
+  b.box(0.9, 0.9, 2.4, 0x6b4a2b, -0.2, 0.45, 0);                                // table
+  for (let i = 0; i < 6; i++) b.box(0.5, 0.12, 0.35, pick([0xe91e63, 0xffd60a, 0x00838f, 0xff7a1a, 0x6a1b9a, 0xffffff]), -0.2, 0.96 + (i % 3) * 0.12, -0.8 + (i >> 1) * 0.7); // folded piles
+  for (const z of [-1.3, 1.3]) b.box(0.08, 2.8, 0.08, 0x777777, -0.7, 1.4, z, { kind: 'shiny' });
+  b.box(0.08, 0.08, 2.7, 0x777777, -0.7, 2.75, 0, { kind: 'shiny' });
+  for (let i = 0; i < 10; i++) b.box(0.03, rand(1.4, 2.1), 0.24, pick([0xe91e63, 0xffd60a, 0x0b8f3a, 0xd62828, 0x1fa2d6, 0xff7a1a, 0x9d4dff, 0xfff3e0]), -0.66, 2.7 - rand(0.7, 1.05), -1.15 + i * 0.255);
+  b.sphere(0.1, 0xfff0c8, -0.4, 2.9, 0, { kind: 'glow', seg: 6 });
+  b.plane(2.6, 3, 'shadow', 0xffffff, [-0.2, 0.03, 0], [-Math.PI / 2, 0, 0]);
+  const g = b.build();
+  g.rotation.y = side > 0 ? Math.PI : 0;
+  return g;
+}
+
+// ---------- Hawke's Bay ----------
+/** Green sea turtle crawling up the sand, with flipper tracks behind it. */
+export function createTurtle() {
+  const b = new Builder();
+  const shell = pick([0x5b4a2e, 0x6b5a36, 0x4a4030]), skin = 0x7d8a5a;
+  b.sphere(0.6, shell, 0, 0.12, 0, { seg: 10, half: true, s: [1, 0.55, 1.25] });
+  for (let i = 0; i < 3; i++) b.box(0.32, 0.04, 0.32, 0x3d3220, 0, 0.42, -0.35 + i * 0.35, { r: [0, Math.PI / 4, 0] }); // scutes
+  b.sphere(0.18, skin, 0, 0.2, -0.85, { seg: 7, s: [1, 0.85, 1.2] });
+  for (const sx of [-1, 1]) {
+    b.box(0.55, 0.06, 0.24, skin, sx * 0.62, 0.1, -0.35, { r: [0, sx * 0.5, 0] });
+    b.box(0.3, 0.06, 0.18, skin, sx * 0.45, 0.08, 0.6, { r: [0, -sx * 0.4, 0] });
+    for (let i = 0; i < 6; i++) b.box(0.14, 0.012, 0.26, 0xa48c5c, sx * 0.55, 0.02, 1.0 + i * 0.45, { r: [0, sx * 0.3, 0] });
+  }
+  b.plane(1.8, 2.2, 'shadow', 0xffffff, [0, 0.03, 0], [-Math.PI / 2, 0, 0]);
+  return b.build();
+}
+
+/** A cluster of weathered coastal rocks. */
+export function createRock() {
+  const b = new Builder();
+  const cols = [0x8a7f70, 0x7a6f62, 0x9c9180, 0x6b6257];
+  for (let i = 0, n = randi(2, 4); i < n; i++) {
+    const r = rand(0.5, 1.4);
+    b.sphere(r, pick(cols), rand(-1, 1), r * 0.35, rand(-1, 1), { seg: 6, s: [rand(1, 1.5), rand(0.55, 0.9), rand(0.9, 1.3)], r: [0, rand(0, 3), 0] });
+  }
+  for (let i = 0; i < 3; i++) b.sphere(rand(0.3, 0.6), pick([0x6f7f3a, 0x8a8a48, 0x5f6f34]), rand(-2, 2), 0.25, rand(-2, 2), { seg: 6, s: [1, 0.6, 1] }); // scrub
+  b.plane(4, 4, 'shadow', 0xffffff, [0, 0.03, 0], [-Math.PI / 2, 0, 0]);
+  return b.build();
+}
+
 export { SHOPS, signUV, MATS };

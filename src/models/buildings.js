@@ -131,10 +131,128 @@ function neonTower(district) {
   return { group: b.build(), w };
 }
 
+/** Saddar colonial: sandstone block with a shaded arcade over the shops, cornices and a little turret. */
+function colonial(district) {
+  const b = new Builder();
+  const n = randi(3, 4), bay = rand(3.2, 3.8), w = n * bay, d = rand(8, 11);
+  const floors = randi(1, 3), fh = 3.6, g = 4.6, h = g + floors * fh;
+  const wall = pick(district.walls), trim = 0xf3e6c8, wood = pick(district.wood);
+  const R = 1.6; // arcade depth: shops sit this far back from the pillars
+  b.box(d - R, g, w, wall, -(d + R) / 2, g / 2, 0);
+  for (let i = 0; i < n; i++) {
+    const z = -w / 2 + bay * (i + 0.5);
+    b.box(0.1, 2.6, bay - 0.6, 0x2a2018, -R + 0.02, 1.4, z);                                  // shop interior
+    b.box(0.5, 0.8, bay - 0.9, pick([0xd9a52a, 0xc23b22, 0x3f8f2f, 0xe8e2d0, 0x8e244d]), -R + 0.3, 0.4, z);
+    b.box(0.08, 0.1, bay - 0.8, 0xfff0c8, -R + 0.08, 2.85, z, { kind: 'glow' });
+    b.plane(bay - 0.5, 0.6, 'sign', 0xffffff, [-R + 0.07, 3.35, z], [0, FACE, 0], { uv: signUV(randi(0, SHOPS.length - 1)) });
+    b.torus(bay / 2 - 0.3, 0.16, trim, 0.05, g - 1.0 - (bay / 2 - 0.3), z, { r: [0, Math.PI / 2, 0], arc: Math.PI }); // arch
+  }
+  for (let i = 0; i <= n; i++) b.box(0.55, g, 0.55, trim, -0.25, g / 2, -w / 2 + i * bay);        // pillars
+  b.box(R + 0.2, 0.25, w, 0xb8a27e, -R / 2, g - 0.05, 0);                                       // arcade ceiling
+  b.box(0.5, 1.0, w + 0.2, wall, -0.2, g - 0.5, 0);
+  b.box(d, floors * fh, w, wall, -d / 2, g + (floors * fh) / 2, 0, { kind: 'facade' });
+  for (let f = 0; f <= floors; f++) b.box(0.35, 0.25, w + 0.15, trim, 0.1, g + f * fh, 0);      // cornice bands
+  for (let f = 0; f < floors; f++) for (let i = 0; i < n; i++) {
+    const z = -w / 2 + bay * (i + 0.5), y = g + f * fh + 1.6;
+    b.box(0.1, 1.9, 1.0, wood, 0.05, y, z);                                                     // louvred shutters
+    b.box(0.3, 0.18, 1.4, trim, 0.15, y + 1.1, z);                                              // window hood
+    if (Math.random() < 0.3) b.box(0.6, 0.1, 1.5, trim, 0.3, y - 1.0, z);                       // small balcony
+  }
+  b.box(d, 0.5, w, wall, -d / 2, h + 0.25, 0);
+  for (let z = -w / 2 + 0.4; z < w / 2; z += 0.7) b.box(0.15, 0.6, 0.15, trim, 0.05, h + 0.8, z); // balustrade
+  b.box(0.3, 0.15, w + 0.1, trim, 0.05, h + 1.15, 0);
+  if (Math.random() < 0.4) {
+    const z = Math.random() < 0.5 ? -w / 2 + 1.2 : w / 2 - 1.2;
+    b.cyl(1.0, 1.0, 2.2, wall, -1.2, h + 1.6, z, { seg: 8 });
+    b.cone(1.25, 2.0, 0x8a5a3a, -1.2, h + 3.7, z, { seg: 8 });
+  }
+  return { group: b.build(), w };
+}
+
+/** Tariq Road shopping plaza: glass shopfronts, stacked hoardings and lights down the facade. */
+function plaza(district) {
+  const b = new Builder();
+  const w = rand(12, 18), d = rand(12, 16), floors = randi(3, 5), fh = 3.4, g = 4.2;
+  const h = g + floors * fh;
+  const wall = pick(district.walls);
+  b.box(d, g, w, 0x2a2420, -d / 2, g / 2, 0);
+  const n = Math.max(2, Math.floor(w / 4)), sw = w / n;
+  for (let i = 0; i < n; i++) {
+    const z = -w / 2 + sw * (i + 0.5);
+    b.box(0.08, 3, sw - 0.4, 0xbfe6ff, 0.03, 1.6, z, { kind: 'glass' });
+    for (let k = 0; k < 3; k++) b.box(0.3, rand(1.2, 1.7), 0.5, pick(district.wood), -0.4, 0.9, z - sw / 3 + k * sw / 3); // clothes on display
+    b.box(0.08, 0.1, sw - 0.5, 0xfff8e8, 0.06, 3.15, z, { kind: 'glow' });
+    b.plane(sw - 0.4, 0.62, 'sign', 0xffffff, [0.07, 3.75, z], [0, FACE, 0], { uv: signUV(randi(0, SHOPS.length - 1)) });
+  }
+  b.box(d, floors * fh, w, wall, -d / 2, g + (floors * fh) / 2, 0, { kind: 'facade' });
+  // big hoardings bolted over the windows: the Tariq Road look
+  for (let i = 0, hn = randi(1, 3); i < hn; i++) {
+    const y = g + 1.6 + i * fh * 1.15, hw = w * rand(0.6, 0.9), col = pick(district.wood), lit = pick(district.neon);
+    if (y + 1.2 > h) break;
+    const z = rand(-(w - hw) / 2, (w - hw) / 2);
+    b.box(0.25, 2.3, hw, col, 0.2, y, z);
+    b.plane(hw - 0.6, 1.3, 'sign', 0xffffff, [0.34, y, z], [0, FACE, 0], { uv: signUV(randi(0, SHOPS.length - 1)) });
+    b.box(0.08, 0.1, hw, lit, 0.36, y + 1.15, z, { kind: 'glow' });
+    b.box(0.08, 0.1, hw, lit, 0.36, y - 1.15, z, { kind: 'glow' });
+  }
+  // shaadi-style fairy-light cascades
+  if (Math.random() < 0.5) for (let k = 0; k < 6; k++) {
+    const z = -w / 2 + 0.8 + k * (w - 1.6) / 5, col = pick([0xffd60a, 0xfff3c4, 0xff2e88]);
+    for (let y = g + 0.6; y < h - 0.3; y += 0.7) b.sphere(0.07, col, 0.12, y, z, { kind: 'glow', seg: 4 });
+  }
+  b.box(d + 0.3, 0.4, w + 0.3, 0x3a3a40, -d / 2, h + 0.2, 0);
+  if (Math.random() < 0.55) {
+    // rooftop billboard frame
+    const bw = Math.min(w - 1, 9);
+    for (const z of [-bw / 3, bw / 3]) b.box(0.2, 3, 0.2, 0x555555, -d / 2, h + 1.6, z);
+    b.box(0.3, 2.6, bw, 0x15171c, -d / 2 + 0.2, h + 3.8, 0);
+    b.plane(bw - 0.4, 1.6, 'neon', pick(district.neon), [-d / 2 + 0.37, h + 3.8, 0], [0, FACE, 0], { uv: neonUV(randi(0, NEON.length - 1)) });
+  } else b.cyl(0.6, 0.6, 1.1, 0x1565c0, -d * 0.6, h + 0.95, rand(-w / 4, w / 4), { seg: 10 });
+  return { group: b.build(), w };
+}
+
+/** Hawke's Bay beach hut: raised plinth, shaded veranda with a charpai, painted trim. */
+function beachHut(district) {
+  const b = new Builder();
+  const w = rand(8, 11), d = rand(6, 8);
+  const wall = pick(district.walls), accent = pick(district.wood), slab = 0xf2efe6;
+  b.box(d + 1.6, 1.0, w, 0xcdbb94, -d / 2 + 0.8, 0.5, 0);                         // plinth
+  b.box(0.7, 0.5, 1.8, 0xcdbb94, 1.95, 0.25, 0);                                  // step
+  b.box(d - 0.8, 3.0, w - 1, wall, -d / 2 - 0.4, 2.5, 0);
+  b.box(0.06, 0.4, w - 1, accent, -0.78, 3.6, 0);                                 // painted band
+  b.box(0.08, 2.0, 1.1, accent, -0.78, 2.0, 0);                                   // door
+  for (const z of [-w / 3, w / 3]) {
+    b.box(0.08, 1.0, 1.2, 0x26323e, -0.78, 2.4, z, { kind: 'glass' });
+    b.box(0.1, 1.2, 0.1, accent, -0.74, 2.4, z - 0.65); b.box(0.1, 1.2, 0.1, accent, -0.74, 2.4, z + 0.65);
+  }
+  b.box(d + 2.2, 0.25, w + 0.4, slab, -d / 2 + 1.1, 4.1, 0);                      // veranda roof slab
+  for (const z of [-w / 2 + 0.4, 0, w / 2 - 0.4]) b.box(0.25, 3.0, 0.25, slab, 1.25, 2.5, z);
+  b.box(0.06, 0.06, w, 0x222222, 1.35, 3.85, 0);
+  for (let i = 0; i < 10; i++) b.sphere(0.07, pick([0xffd60a, 0xff2e88, 0x2bff88, 0xffffff]), 1.38, 3.75, -w / 2 + 0.5 + i * (w - 1) / 9, { kind: 'glow', seg: 4 });
+  // charpai on the veranda
+  const cz = rand(-w / 4, w / 4);
+  b.box(0.9, 0.1, 1.9, 0x7a5230, 0.3, 1.45, cz);
+  b.box(0.8, 0.03, 1.8, 0xe8d6a8, 0.3, 1.51, cz);
+  for (const dx of [-0.38, 0.38]) for (const dz of [-0.85, 0.85]) b.box(0.08, 0.45, 0.08, 0x7a5230, 0.3 + dx, 1.2, cz + dz);
+  b.cyl(0.6, 0.6, 1.1, 0x1565c0, -d * 0.6, 4.75, rand(-w / 4, w / 4), { seg: 10 });   // water tank
+  if (Math.random() < 0.5) { b.cyl(0.04, 0.04, 3, 0xdddddd, -d + 0.8, 5.7, w / 2 - 0.8, { seg: 4 }); b.box(0.04, 0.7, 1.1, pick([0x0b6e3a, accent]), -d + 0.8, 6.8, w / 2 - 0.25); }
+  b.plane(d + 4, w + 2, 'shadow', 0xffffff, [-d / 2 + 1, 0.03, 0], [-Math.PI / 2, 0, 0]);
+  return { group: b.build(), w };
+}
+
+/** Clifton: mix of pastel sea-facing flats and the odd glass tower. */
+function clifton(district) {
+  return Math.random() < 0.6 ? seaFront(district) : neonTower(district);
+}
+
 export function createBuilding(district) {
   if (district.id === 'port') return portBlock(district);
   if (district.id === 'mazar') return parkSegment(district);
   if (district.id === 'old') return oldCity(district);
   if (district.id === 'sea') return seaFront(district);
+  if (district.id === 'saddar') return colonial(district);
+  if (district.id === 'tariq') return plaza(district);
+  if (district.id === 'hawks') return beachHut(district);
+  if (district.id === 'clifton') return clifton(district);
   return neonTower(district);
 }

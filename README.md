@@ -1,6 +1,6 @@
 # 🛺 Rikshaw Rush — Karachi
 
-A 3D endless runner in the browser. You drive a decorated Karachi auto-rickshaw through **Burns Road, Sea View, Kemari Harbour, Shahrah-e-Faisal and Mazar-e-Quaid**. Dodge traffic, cows and baraats, jump speed breakers and open manholes, carry passengers, race Chotu Ustad, and collect K-A-R-A-C-H-I.
+A 3D endless runner in the browser. You drive a decorated Karachi auto-rickshaw through **Burns Road, Empress Market, Tariq Road, Sea View, Teen Talwar, Kemari Harbour, Hawke's Bay, Shahrah-e-Faisal and Mazar-e-Quaid**. Dodge traffic, cows and baraats, jump speed breakers and open manholes, carry passengers, race Chotu Ustad, and collect K-A-R-A-C-H-I.
 
 **Made in Pakistan 🇵🇰 — Developer: [Muhammad Talha Khan](https://muhammadtalhakhan2003.github.io/PortFolio_Talha/)**
 
@@ -66,10 +66,10 @@ Keep each model to roughly 5–20k triangles and use a few simple materials so t
 
 ## Features
 
-- **5 Karachi districts** with gates between them, plus a choice of start location.
+- **9 Karachi districts** with gates between them, plus a choice of start location.
 - **Day/night cycle**, rain, dust storms, lightning, bloom, animated sea water, clouds and a distant skyline.
 - **Realistic roads:** speed breakers, open manholes, broken patches, potholes, puddles, asphalt patches and cracks.
-- **Karachi life:** paan cabins and paan stains, wall posters and chalking, baraats, camels at Clifton, cranes and ships at Kemari.
+- **Karachi life:** paan cabins and paan stains, wall posters and chalking, baraats, camels at Clifton, cranes and ships at Kemari, Empress Market's clock tower in Saddar, Tariq Road's hoardings and jhandiyan, the Teen Talwar roundabout, and Hawke's Bay huts with charpais and sea turtles.
 - **Gameplay:** combos and fever mode, near misses, ramps and air tricks, nitro smashing, horn that clears the way, passenger missions, the rival racer Chotu Ustad, K-A-R-A-C-H-I letters, and power-ups (magnet, shield, 2x coins, nitro, Meetha Paan).
 - **Progression:** garage (upgrades, paint, horns, animated trails, boosts), daily Lucky Spin, daily challenges, achievements, top runs, and continue-for-coins.
 - **Audio:** a synthesised two-stroke engine with gears, rattle and backfire. Rikshaw Radio has Dhol FM, Qawwali Night and a Lo-fi station, or **your own songs** stored only in your browser.
